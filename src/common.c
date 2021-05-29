@@ -1,5 +1,5 @@
 /*
- * dropbear_epka - EPKA Auth Plugin for Dropbear
+ * dropbear_plugin - Auth Plugin for Dropbear
  * 
  * Copyright (c) 2018 Fabrizio Bertocci
  * All rights reserved.

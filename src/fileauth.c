@@ -1,5 +1,5 @@
 /*
- * dropbear_epka - EPKA Auth Plugin for Dropbear
+ * dropbear_plugin - Auth Plugin for Dropbear
  * 
  * Copyright (c) 2018 Fabrizio Bertocci
  * All rights reserved.
@@ -48,7 +48,7 @@
 #include <string.h>
 #include "cJSON.h"
 #include "common.h"
-#include "pubkeyapi.h"      /* The EPKA API */
+#include "pubkeyapi.h"      /* The Plugin API */
 
 #define PLUGIN_NAME             "fileauth"
 
@@ -71,18 +71,18 @@
 extern int base64_decode(const unsigned char *in,  unsigned long inlen,
                         unsigned char *out, unsigned long *outlen);
 
-/* The plugin instance, extends EPKAInstance */
+/* The plugin instance, extends PluginInstance */
 struct MyPlugin {
-    struct EPKAInstance     m_parent;
+    struct PluginInstance     m_parent;
 
     int                     m_verbose;
     char *                  m_fileName;     /* strdup'd */
     cJSON *                 m_jsonRoot;     /* must free with cJSON_Delete */
 };
 
-/* The ssh session: extends EPKASession */
+/* The ssh session: extends PluginSession */
 struct MySession {
-    struct EPKASession      m_parent;
+    struct PluginSession      m_parent;
     
     /* Cached User: set during pre-auth, it's reused during the 2nd call to
      * avoid re-scanning the entire file
@@ -162,7 +162,7 @@ static int matchLine(cJSON *node,
     return 1;
 }
 
-static char * MyGetOptions(struct EPKASession *_session) {
+static char * MyGetOptions(struct PluginSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     // struct MyPlugin *me = (struct MyPlugin *)_session->plugin_instance;
     cJSON *optionNode = cJSON_GetObjectItem(session->m_cachedUser, "options");
@@ -176,8 +176,8 @@ static char * MyGetOptions(struct EPKASession *_session) {
     return optionNode->valuestring;
 }
 
-static int MyCheckPubKey(struct EPKAInstance *instance, 
-        struct EPKASession **sessionInOut,
+static int MyCheckPubKey(struct PluginInstance *instance, 
+        struct PluginSession **sessionInOut,
         const char* algo, 
         unsigned int algolen,
         const unsigned char* keyblob, 
@@ -247,7 +247,7 @@ static int MyCheckPubKey(struct EPKAInstance *instance,
     return 0;   /* Success */
 }
 
-static void MyAuthSuccess(struct EPKASession *_session) {
+static void MyAuthSuccess(struct PluginSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     struct MyPlugin *me = (struct MyPlugin *)_session->plugin_instance;
 
@@ -256,7 +256,7 @@ static void MyAuthSuccess(struct EPKASession *_session) {
     }
 }
 
-static void MyDeleteSession(struct EPKASession *_session) {
+static void MyDeleteSession(struct PluginSession *_session) {
     struct MySession *session = (struct MySession *)_session;
 
     if (session) {
@@ -268,7 +268,7 @@ static void MyDeleteSession(struct EPKASession *_session) {
     }
 }
 
-static void MyDeletePlugin(struct EPKAInstance *instance) {
+static void MyDeletePlugin(struct PluginInstance *instance) {
     struct MyPlugin * me = (struct MyPlugin *)instance;
 
     if (me) {
@@ -320,8 +320,8 @@ void * plugin_new(int verbose, const char *options, const char *addrstring) {
 
 
     retVal = calloc(1, sizeof(*retVal));
-    retVal->m_parent.api_version[0] = DROPBEAR_EPKA_VERSION_MAJOR;
-    retVal->m_parent.api_version[1] = DROPBEAR_EPKA_VERSION_MINOR;
+    retVal->m_parent.api_version[0] = DROPBEAR_PLUGIN_VERSION_MAJOR;
+    retVal->m_parent.api_version[1] = DROPBEAR_PLUGIN_VERSION_MINOR;
 
     retVal->m_parent.checkpubkey = MyCheckPubKey;
     retVal->m_parent.auth_success = MyAuthSuccess;

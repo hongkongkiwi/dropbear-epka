@@ -1,5 +1,5 @@
 /*
- * dropbear_epka - EPKA Auth Plugin for Dropbear
+ * dropbear_plugin - PLUGIN Auth Plugin for Dropbear
  * 
  * Copyright (c) 2018 Fabrizio Bertocci
  * All rights reserved.
@@ -26,32 +26,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pubkeyapi.h"      /* The EPKA API */
+#include "pubkeyapi.h"      /* The PLUGIN API */
 
 #define PLUGIN_NAME             "testauth"
 
 #define MSG_PREFIX              "[" PLUGIN_NAME "] - "
 
-/* The plugin instance, extends EPKAInstance */
+/* The plugin instance, extends PLUGINInstance */
 struct MyPlugin {
-    struct EPKAInstance     m_parent;
+    struct PLUGINInstance     m_parent;
 
     int                     m_verbose;
 };
 
-/* The ssh session: extends EPKASession */
+/* The ssh session: extends PLUGINSession */
 struct MySession {
-    struct EPKASession      m_parent;
+    struct PLUGINSession      m_parent;
 
     int                     m_clientId;
 };
 
-static char * MyGetOptions(struct EPKASession *_session) {
+static char * MyGetOptions(struct PLUGINSession *_session) {
     return "no-X11-forwarding,no-pty";
 }
 
-static int MyCheckPubKey(struct EPKAInstance *instance, 
-        struct EPKASession **sessionInOut,
+static int MyCheckPubKey(struct PLUGINInstance *instance, 
+        struct PLUGINSession **sessionInOut,
         const char* algo, 
         unsigned int algolen,
         const unsigned char* keyblob, 
@@ -74,14 +74,14 @@ static int MyCheckPubKey(struct EPKAInstance *instance,
     return 0;   /* Success */
 }
 
-static void MyAuthSuccess(struct EPKASession *_session) {
+static void MyAuthSuccess(struct PLUGINSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     struct MyPlugin *me = (struct MyPlugin *)_session->plugin_instance;
 
     printf(MSG_PREFIX "auth_success called - clientID = %d\n", session->m_clientId);
 }
 
-static void MyDeleteSession(struct EPKASession *_session) {
+static void MyDeleteSession(struct PLUGINSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     struct MyPlugin *me = (struct MyPlugin *)_session->plugin_instance;
 
@@ -89,7 +89,7 @@ static void MyDeleteSession(struct EPKASession *_session) {
     free(session);
 }
 
-static void MyDeletePlugin(struct EPKAInstance *instance) {
+static void MyDeletePlugin(struct PLUGINInstance *instance) {
     struct MyPlugin * me = (struct MyPlugin *)instance;
 
     free(me);
@@ -102,8 +102,8 @@ void * plugin_new(int verbose, const char *options, const char *addrstring) {
     if (!options) options = "<NULL>";
     printf(MSG_PREFIX "plugin_init called - options = %s, clientIP=%s\n", options, addrstring);
     retVal = calloc(1, sizeof(*retVal));
-    retVal->m_parent.api_version[0] = DROPBEAR_EPKA_VERSION_MAJOR;
-    retVal->m_parent.api_version[1] = DROPBEAR_EPKA_VERSION_MINOR;
+    retVal->m_parent.api_version[0] = DROPBEAR_PLUGIN_VERSION_MAJOR;
+    retVal->m_parent.api_version[1] = DROPBEAR_PLUGIN_VERSION_MINOR;
 
     retVal->m_parent.checkpubkey = MyCheckPubKey;
     retVal->m_parent.auth_success = MyAuthSuccess;

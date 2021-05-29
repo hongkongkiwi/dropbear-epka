@@ -1,5 +1,5 @@
 /*
- * dropbear_epka - EPKA Auth Plugin for Dropbear
+ * dropbear_plugin - PLUGIN Auth Plugin for Dropbear
  * 
  * Copyright (c) 2018 Fabrizio Bertocci
  * All rights reserved.
@@ -23,7 +23,7 @@
  * SOFTWARE. */
 
 
-/* mysqlauth.c - a EPKA (External Public Key Authentication) Plug-in
+/* mysqlauth.c - a PLUGIN (External Public Key Authentication) Plug-in
  * for Dropbear that reads user and public key from a MySQL database
  *
  * The configuration of MySQL is in a configuration file that need to be
@@ -90,7 +90,7 @@
 #include <unistd.h>
 
 #include "common.h"
-#include "pubkeyapi.h"      /* The EPKA API */
+#include "pubkeyapi.h"      /* The PLUGIN API */
 
 
 /* Dropbear logger */
@@ -103,9 +103,9 @@ extern void dropbear_log(int priority, const char* format, ...);
 
 #define MSG_PREFIX              "[" PLUGIN_NAME "] - "
 
-/* The plugin instance, extends EPKAInstance */
+/* The plugin instance, extends PLUGINInstance */
 struct MyPlugin {
-    struct EPKAInstance     m_parent;
+    struct PLUGINInstance     m_parent;
  
     /* Database Information */
     char *                  m_dbHost;
@@ -150,9 +150,9 @@ struct MyPlugin {
 static const char * const LOG_ENTRY_KEYWORD_CONNECTED    = "CONNECT";
 static const char * const LOG_ENTRY_KEYWORD_DISCONNECTED = "DISCONN";
 
-/* The ssh session: extends EPKASession */
+/* The ssh session: extends PLUGINSession */
 struct MySession {
-    struct EPKASession      m_parent;
+    struct PLUGINSession      m_parent;
    
     // Cached data: read during pre-auth is reused when dropbear authenticate client 
     // All those buffers must be freed when the session is destroyed
@@ -596,7 +596,7 @@ done:
 // }}}
 // {{{ MyGetOptions
 // ----------------------------------------------------------------------------
-static char * MyGetOptions(struct EPKASession *_session) {
+static char * MyGetOptions(struct PLUGINSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     return session->m_options;
 }
@@ -604,7 +604,7 @@ static char * MyGetOptions(struct EPKASession *_session) {
 // }}}
 // {{{ MyDeletePlugin
 // ----------------------------------------------------------------------------
-static void MyDeletePlugin(struct EPKAInstance *instance) {
+static void MyDeletePlugin(struct PLUGINInstance *instance) {
     struct MyPlugin * me = (struct MyPlugin *)instance;
 
     if (me) {
@@ -635,7 +635,7 @@ static void MyDeletePlugin(struct EPKAInstance *instance) {
 // }}}
 // {{{ MyDeleteSession
 // ----------------------------------------------------------------------------
-static void MyDeleteSession(struct EPKASession *_session) {
+static void MyDeleteSession(struct PLUGINSession *_session) {
     struct MySession *session = (struct MySession *)_session;
 
     if (session) {
@@ -669,8 +669,8 @@ static void MyDeleteSession(struct EPKASession *_session) {
 // }}}
 // {{{ MyCheckPubKey
 // ----------------------------------------------------------------------------
-static int MyCheckPubKey(struct EPKAInstance *instance, 
-        struct EPKASession **sessionInOut,
+static int MyCheckPubKey(struct PLUGINInstance *instance, 
+        struct PLUGINSession **sessionInOut,
         const char* algo, 
         unsigned int algolen,
         const unsigned char* keyblob, 
@@ -753,7 +753,7 @@ err:
 // }}}
 // {{{ MyAuthSuccess
 // ----------------------------------------------------------------------------
-static void MyAuthSuccess(struct EPKASession *_session) {
+static void MyAuthSuccess(struct PLUGINSession *_session) {
     struct MySession *session = (struct MySession *)_session;
     struct MyPlugin *me = (struct MyPlugin *)_session->plugin_instance;
 
@@ -785,8 +785,8 @@ void * plugin_new(int verbose, const char *configFile, const char *addrstring) {
     }
 
     retVal = calloc(1, sizeof(*retVal));
-    retVal->m_parent.api_version[0] = DROPBEAR_EPKA_VERSION_MAJOR;
-    retVal->m_parent.api_version[1] = DROPBEAR_EPKA_VERSION_MINOR;
+    retVal->m_parent.api_version[0] = DROPBEAR_PLUGIN_VERSION_MAJOR;
+    retVal->m_parent.api_version[1] = DROPBEAR_PLUGIN_VERSION_MINOR;
 
     retVal->m_parent.checkpubkey = MyCheckPubKey;
     retVal->m_parent.auth_success = MyAuthSuccess;
